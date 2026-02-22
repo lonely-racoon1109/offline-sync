@@ -5,9 +5,13 @@ from watchdog.events import FileSystemEventHandler
 import json
 import hashlib
 
-SYNC_FOLDER = 'uploads'
+FILES = 'uploads'
 os.makedirs('uploads',exist_ok=True)
-LOG_FILE = os.path.join(SYNC_FOLDER, ".sync", "log.json")
+
+SYNC_FOLDER =  os.path.join(FILES, ".sync")
+os.makedirs(SYNC_FOLDER, exist_ok=True)
+
+LOG_FILE = os.path.join(SYNC_FOLDER,"log.json")
 
 def append_to_log_file(entry):
     if not os.path.exists(LOG_FILE):
@@ -21,30 +25,59 @@ def append_to_log_file(entry):
 
     logs.append(entry)
 
-    with open(LOG_FILE, 'w') as f:
-        json.dump(logs, f, indent=2)
+    try:
+        with open(LOG_FILE, 'w') as f:
+            json.dump(logs, f, indent=2)
+        print("Log file written")
+    except Exception as e:
+        print("WRITE ERROR:", e)
+
+
 
 class SyncHandler(FileSystemEventHandler):
     def on_created(self, event):
-        if not event.is_directory:
-            print(f"Created: {event.src_path}")
-    
+        if event.is_directory or event.src_path.startswith(SYNC_FOLDER):
+            return 
+        append_to_log_file({
+            "event" : "created",
+            "path": event.src_path
+        })
+        print(f"Created: {event.src_path}")
+
     def on_modified(self, event):
-        if not event.is_directory:
-            print(f"Modified: {event.src_path}")
+        if event.is_directory or event.src_path.startswith(SYNC_FOLDER):
+            return
+        append_to_log_file({
+            "event" : "modified",
+            "path": event.src_path
+        })
+        print(f"Modified: {event.src_path}")
     
     def on_deleted(self, event):
-        if not event.is_directory:
-            print(f"Deleted: {event.src_path}")
+        if event.is_directory or event.src_path.startswith(SYNC_FOLDER):
+            return
+        append_to_log_file({
+            "event" : "deleted",
+            "path": event.src_path
+        })
+        print(f"Deleted: {event.src_path}")
 
     def on_moved(self, event):
-        if not event.is_directory:
-            print(f"{event.src_path} Moved to {event.dest_path}")
+        if event.is_directory or event.src_path.startswith(SYNC_FOLDER):
+            return
+        append_to_log_file({
+            "event" : "moved",
+            "path": event.dest_path
+        })
+        print(f"{event.src_path} Moved to {event.dest_path}")
 
 if __name__ == "__main__":
+    print(LOG_FILE)
+    print(os.path.abspath(LOG_FILE))
+
     event_handler = SyncHandler()
     observer = Observer()
-    observer.schedule(event_handler, SYNC_FOLDER, recursive=True)
+    observer.schedule(event_handler, FILES, recursive=True)
     observer.start()
 
     print("Watching folder for changes")

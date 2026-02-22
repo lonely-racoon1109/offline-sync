@@ -5,13 +5,13 @@ from watchdog.events import FileSystemEventHandler
 import json
 import hashlib
 
-FILES = 'uploads'
+FILES = ' '    //  folder where files will be stored
 os.makedirs('uploads',exist_ok=True)
 
-SYNC_FOLDER =  os.path.join(FILES, ".sync")
+SYNC_FOLDER =  os.path.join(FILES, " ")    // folder where log.json will be stored
 os.makedirs(SYNC_FOLDER, exist_ok=True)
 
-LOG_FILE = os.path.join(SYNC_FOLDER,"log.json")
+LOG_FILE = os.path.join(SYNC_FOLDER,"log.json")    //log file
 
 def append_to_log_file(entry):
     if not os.path.exists(LOG_FILE):
